@@ -25,6 +25,10 @@ function initialize() {
 
 function bindDashboard() {
     refs.userInput = document.getElementById("userInput");
+    refs.inputMode = document.getElementById("inputMode");
+    refs.fileInput = document.getElementById("fileInput");
+    refs.imageInput = document.getElementById("imageInput");
+    refs.pasteBtn = document.getElementById("pasteBtn");
     refs.analyzeBtn = document.getElementById("analyzeBtn");
     refs.results = document.getElementById("results");
     refs.riskScore = document.getElementById("riskScore");
@@ -47,6 +51,18 @@ function bindDashboard() {
     }
 
     refs.analyzeBtn.addEventListener("click", handleAnalyze);
+
+    if (refs.fileInput) {
+        refs.fileInput.addEventListener("change", handleFileUpload);
+    }
+
+    if (refs.imageInput) {
+        refs.imageInput.addEventListener("change", handleImageUpload);
+    }
+
+    if (refs.pasteBtn) {
+        refs.pasteBtn.addEventListener("click", handlePasteClipboard);
+    }
 
     if (refs.userInput) {
         refs.userInput.addEventListener("input", () => {
@@ -84,8 +100,9 @@ function createParticles(count) {
     }
 }
 
-async function handleAnalyze() {
-    const text = (refs.userInput?.value || "").trim();
+async function handleAnalyze(textOverride) {
+    const text = String(textOverride !== undefined ? textOverride : refs.userInput?.value || "").trim();
+    const mode = (refs.inputMode?.value || "General Text").toLowerCase();
 
     if (!text) {
         refs.userInput?.classList.add("field-error");
@@ -103,7 +120,7 @@ async function handleAnalyze() {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, mode }),
         });
 
         if (response.status === 401) {
@@ -121,6 +138,63 @@ async function handleAnalyze() {
     } catch (error) {
         setLoadingState(false);
         setInputFeedback(error.message || "Analysis failed.", true);
+    }
+}
+
+// NEW FEATURE: text file upload handler
+async function handleFileUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+        const fileText = String(reader.result || "").trim();
+        if (!fileText) {
+            setInputFeedback("Uploaded text file is empty.", true);
+            return;
+        }
+
+        refs.userInput.value = fileText;
+        setInputFeedback(`Text file loaded: ${file.name}. Analyzing...`, false);
+        await handleAnalyze(fileText);
+    };
+
+    reader.onerror = () => {
+        setInputFeedback("Unable to read the file. Please upload a valid text file.", true);
+    };
+
+    reader.readAsText(file);
+}
+
+// NEW FEATURE: mock image upload handler
+async function handleImageUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    refs.userInput.value = file.name ? `Image: ${file.name}` : "Image uploaded";
+    setInputFeedback("Image uploaded - analyzing...", false);
+    await handleAnalyze(`Extracted from image:\nName: Image User\nDate of Birth: 15/03/1995\nPhone: 9876543210\nLocation: Mumbai`);
+}
+
+// NEW FEATURE: clipboard paste handler
+async function handlePasteClipboard() {
+    try {
+        const clipboardText = String(await navigator.clipboard.readText() || "").trim();
+        if (!clipboardText) {
+            setInputFeedback("Clipboard is empty or contains no text.", true);
+            return;
+        }
+
+        refs.userInput.value = clipboardText;
+        setInputFeedback("Clipboard text pasted. Analyzing...", false);
+        await handleAnalyze(clipboardText);
+    } catch (error) {
+        setInputFeedback("Unable to read clipboard. Please allow clipboard access.", true);
     }
 }
 
@@ -173,23 +247,19 @@ function setInputFeedback(message, isError) {
 
 function displayResults(payload) {
     const analysis = payload.analysis || {};
-    const extracted = analysis.extracted_data || {
-        names: [],
-        phones: [],
-        dates: [],
-        locations: [],
-    };
+    const extracted = normalizeExtractedData(analysis.extracted_data);
     const attack = payload.attack || [];
+    const score = normalizeRiskScore(analysis.risk_score, extracted);
 
     refs.results?.classList.remove("is-hidden");
 
-    updateRiskScore(analysis.risk_score || 0);
-    updateAlerts(analysis.alerts || []);
-    updateAttackTimeline(attack);
-    updateAttackSteps(attack);
-    updateAttackerPanel(extracted);
-    updateSafeVersion(payload.safe_version || "");
-    updateChart(analysis);
+    safelyRender(() => updateRiskScore(score));
+    safelyRender(() => updateAlerts(analysis.alerts || []));
+    safelyRender(() => updateAttackTimeline(attack));
+    safelyRender(() => updateAttackSteps(attack));
+    safelyRender(() => updateAttackerPanel(extracted));
+    safelyRender(() => updateSafeVersion(payload.safe_version || ""));
+    safelyRender(() => updateChart({ ...analysis, extracted_data: extracted }));
 
     refs.results?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -199,13 +269,14 @@ function updateRiskScore(score) {
         return;
     }
 
-    const meta = getRiskMeta(score);
+    const normalizedScore = normalizeRiskScore(score);
+    const meta = getRiskMeta(normalizedScore);
     refs.riskScore.className = `risk-value ${meta.className}`;
     refs.riskLabel.textContent = meta.label;
     refs.riskMeta.textContent = meta.copy;
-    refs.highRiskIndicator.classList.toggle("hidden", score <= 70);
+    refs.highRiskIndicator.classList.toggle("hidden", normalizedScore <= 70);
 
-    animateNumber(refs.riskScore, score, 1200);
+    animateNumber(refs.riskScore, normalizedScore, 1200);
 }
 
 function getRiskMeta(score) {
@@ -462,12 +533,7 @@ function updateChart(analysis) {
         return;
     }
 
-    const extracted = analysis.extracted_data || {
-        names: [],
-        phones: [],
-        dates: [],
-        locations: [],
-    };
+    const extracted = normalizeExtractedData(analysis.extracted_data);
     const values = [
         extracted.names.length,
         extracted.phones.length,
@@ -605,4 +671,58 @@ function schedule(bucket, callback, delay) {
 function clearTimeoutBucket(bucket) {
     state.timeouts[bucket].forEach((id) => window.clearTimeout(id));
     state.timeouts[bucket] = [];
+}
+
+function normalizeExtractedData(extracted) {
+    const source = extracted || {};
+    return {
+        names: Array.isArray(source.names) ? source.names : [],
+        phones: Array.isArray(source.phones) ? source.phones : [],
+        dates: Array.isArray(source.dates) ? source.dates : [],
+        locations: Array.isArray(source.locations) ? source.locations : [],
+    };
+}
+
+function normalizeRiskScore(score, extracted) {
+    const numericScore = Number(score);
+    if (Number.isFinite(numericScore)) {
+        return Math.max(0, Math.min(100, Math.round(numericScore)));
+    }
+
+    if (!extracted) {
+        return 0;
+    }
+
+    let fallbackScore = 0;
+    fallbackScore += Math.min(extracted.names.length * 18, 28);
+    fallbackScore += Math.min(extracted.phones.length * 35, 40);
+    fallbackScore += Math.min(extracted.dates.length * 28, 32);
+    fallbackScore += Math.min(extracted.locations.length * 12, 18);
+
+    const detectedCategories = [
+        extracted.names,
+        extracted.phones,
+        extracted.dates,
+        extracted.locations,
+    ].filter((items) => items.length > 0).length;
+
+    if (detectedCategories >= 2) {
+        fallbackScore += 8;
+    }
+    if (extracted.phones.length && extracted.dates.length) {
+        fallbackScore += 10;
+    }
+    if (extracted.names.length && extracted.locations.length) {
+        fallbackScore += 6;
+    }
+
+    return Math.min(fallbackScore, 100);
+}
+
+function safelyRender(renderFn) {
+    try {
+        renderFn();
+    } catch (error) {
+        console.error("Dashboard render error:", error);
+    }
 }

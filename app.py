@@ -67,11 +67,16 @@ def analyze():
     """Analyze text, generate a safe version, and build an attack simulation."""
     payload = request.get_json(silent=True) or {}
     text = str(payload.get("text", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower() if payload.get("mode") else ""
 
     if not text:
         return jsonify({"error": "Please provide text to analyze."}), 400
 
     analysis = analyze_text(text)
+    # NEW FEATURE: adjust risk lightly for selected input modes (SMS/Email sensitivity)
+    if mode in ("sms", "email"):
+        analysis["risk_score"] = min(100, analysis["risk_score"] + 5)
+
     safe_version = generate_safe_version(text)
     attack = simulate_attack(analysis["extracted_data"], analysis["risk_score"])
 

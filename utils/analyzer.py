@@ -16,6 +16,7 @@ KNOWN_CITIES = [
     "delhi",
     "bengaluru",
     "bangalore",
+    "banglore",
     "chennai",
     "hyderabad",
     "kolkata",
@@ -29,6 +30,10 @@ KNOWN_CITIES = [
     "seattle",
 ]
 
+CITY_ALIASES = {
+    "banglore": "Bangalore",
+}
+
 IGNORE_NAME_WORDS = {
     "hi",
     "hello",
@@ -40,14 +45,31 @@ IGNORE_NAME_WORDS = {
     "regards",
 }
 
+NAME_BOUNDARY_WORDS = {
+    "from",
+    "in",
+    "at",
+    "near",
+    "with",
+    "dob",
+    "phone",
+    "email",
+}
+
 DOB_PATTERN = re.compile(
-    r"\b(?:0?[1-9]|[12][0-9]|3[01])[/-](?:0?[1-9]|1[0-2])[/-](?:19|20)\d{2}\b"
+    r"\b(?:0?[1-9]|[12][0-9]|3[01])[\/\-.](?:0?[1-9]|1[0-2])[\/\-.](?:19|20)\d{2}\b"
 )
 PHONE_CANDIDATE_PATTERN = re.compile(r"(?<!\d)(?:\+?\d[\d().\-\s]{8,}\d)(?!\d)")
 GENERAL_NAME_PATTERN = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b")
 NAME_TRIGGER_PATTERNS = [
-    re.compile(r"\b(?:i am|i'm|my name is|this is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})"),
-    re.compile(r"\bname\s*[:\-]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})"),
+    re.compile(
+        r"\b(?:i am|i'm|my name is|this is)\s+([A-Za-z][A-Za-z'`-]+(?:\s+[A-Za-z][A-Za-z'`-]+){0,2})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bname\s*[:\-]\s*([A-Za-z][A-Za-z'`-]+(?:\s+[A-Za-z][A-Za-z'`-]+){0,2})",
+        re.IGNORECASE,
+    ),
 ]
 
 
@@ -63,17 +85,52 @@ def unique_ordered(items):
     return ordered
 
 
+def normalize_text(text):
+    """Normalize punctuation and spacing so OCR or pasted text is easier to parse."""
+    cleaned = str(text or "")
+    replacements = {
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2013": "-",
+        "\u2014": "-",
+        "\u00a0": " ",
+    }
+
+    for original, replacement in replacements.items():
+        cleaned = cleaned.replace(original, replacement)
+
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned.strip()
+
+
+def clean_candidate_name(candidate):
+    """Trim label words from the end of a detected name candidate."""
+    parts = candidate.strip(" ,.:;\"'").split()
+    while parts and parts[-1].lower() in NAME_BOUNDARY_WORDS:
+        parts.pop()
+    if not parts:
+        return ""
+    return " ".join(part.capitalize() for part in parts)
+
+
 def detect_names(text):
     """Extract probable names while ignoring greeting words and locations."""
+    text = normalize_text(text)
     candidates = []
     city_lookup = {city.title() for city in KNOWN_CITIES}
 
     for pattern in NAME_TRIGGER_PATTERNS:
         for match in pattern.finditer(text):
-            candidates.append(match.group(1).strip())
+            candidate = clean_candidate_name(match.group(1))
+            if candidate:
+                candidates.append(candidate)
 
     for match in GENERAL_NAME_PATTERN.finditer(text):
-        candidate = match.group(1).strip()
+        candidate = clean_candidate_name(match.group(1))
+        if not candidate:
+            continue
         first_word = candidate.split()[0].lower()
         if first_word in IGNORE_NAME_WORDS:
             continue
@@ -91,26 +148,31 @@ def detect_names(text):
 
 def detect_phones(text):
     """Extract 10-digit phone numbers from free-form text."""
+    text = normalize_text(text)
     phones = []
     for match in PHONE_CANDIDATE_PATTERN.finditer(text):
         digits = re.sub(r"\D", "", match.group(0))
         if len(digits) == 10:
             phones.append(digits)
+        elif len(digits) == 12 and digits.startswith("91"):
+            phones.append(digits[-10:])
     return unique_ordered(phones)
 
 
 def detect_dates(text):
     """Extract probable dates of birth."""
+    text = normalize_text(text)
     return unique_ordered(DOB_PATTERN.findall(text))
 
 
 def detect_locations(text):
     """Extract known city names from the text."""
+    text = normalize_text(text)
     locations = []
     for city in sorted(KNOWN_CITIES, key=len, reverse=True):
         pattern = re.compile(rf"\b{re.escape(city)}\b", re.IGNORECASE)
         if pattern.search(text):
-            locations.append(city.title())
+            locations.append(CITY_ALIASES.get(city, city.title()))
     return unique_ordered(locations)
 
 
@@ -173,6 +235,7 @@ def build_alerts(extracted_data, risk_score):
 
 def analyze_text(text):
     """Analyze text for sensitive personal data."""
+    text = normalize_text(text)
     extracted_data = {
         "names": detect_names(text),
         "phones": detect_phones(text),
@@ -200,6 +263,7 @@ def replace_phone(match):
 
 def generate_safe_version(text):
     """Sanitize phone numbers, dates of birth, and city names."""
+    text = normalize_text(text)
     safe_text = PHONE_CANDIDATE_PATTERN.sub(replace_phone, text)
     safe_text = DOB_PATTERN.sub("[DOB]", safe_text)
 

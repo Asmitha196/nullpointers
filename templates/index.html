@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20260428') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body data-page="dashboard">
@@ -51,6 +51,30 @@
                 <p class="panel-note" id="inputFeedback">
                     Paste a bio, email, or message to model what an attacker can infer from it.
                 </p>
+
+                <!-- NEW FEATURE: multi-input controls -->
+                <div style="display:grid; gap:1rem; margin-bottom:1rem;">
+                    <div style="display:grid; gap:0.65rem;">
+                        <label class="field-label" for="inputMode">Input Mode</label>
+                        <select id="inputMode" class="field-input" aria-label="Select input mode">
+                            <option>General Text</option>
+                            <option>Email</option>
+                            <option>SMS</option>
+                            <option>Resume</option>
+                        </select>
+                    </div>
+                    <div style="display:grid; gap:0.65rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                        <div class="field-group">
+                            <label class="field-label" for="fileInput">Upload Text File</label>
+                            <input type="file" id="fileInput" class="field-input" accept=".txt" aria-label="Upload a text file" />
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="imageInput">Upload Image</label>
+                            <input type="file" accept="image/*" id="imageInput" class="field-input" aria-label="Upload an image" />
+                        </div>
+                        <button id="pasteBtn" class="copy-btn" type="button">Paste from Clipboard</button>
+                    </div>
+                </div>
 
                 <textarea
                     id="userInput"
@@ -176,6 +200,6 @@
         </footer>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js', v='20260428') }}"></script>
 </body>
 </html>
