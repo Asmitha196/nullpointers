@@ -1,9 +1,9 @@
-# 🚀 Future Trace AI – Progress Report
+#  Future Trace AI – Progress Report
 
-## 👥 Team Name:
+##  Team Name:
 Null Pointers
 
-## 🧑‍💻 Team Members:
+## Team Members:
 - Rayzil
 - Ashritha
 - Ashmitha
@@ -12,13 +12,13 @@ Null Pointers
 
 ---
 
-## 🎯 Problem Statement:
+##  Problem Statement:
 Users unknowingly share sensitive personal information online (like phone numbers, DOB, location), without understanding how attackers can misuse this data.  
 There is no simple tool that predicts potential cyber threats *before* data is shared.
 
 ---
 
-## 💡 Solution Overview:
+## Solution Overview:
 We built **Future Trace AI**, a cybersecurity web application that:
 - Detects sensitive data in user input
 - Calculates a **risk score (0–100)**
@@ -28,9 +28,9 @@ We built **Future Trace AI**, a cybersecurity web application that:
 
 ---
 
-## ⚙️ Features Implemented:
+## Features Implemented:
 
-### 🔹 Core Features:
+###  Core Features:
 - User input panel (bio/message/email)
 - Detection of:
   - Name
@@ -40,45 +40,45 @@ We built **Future Trace AI**, a cybersecurity web application that:
 - Risk score calculation
 - Security alerts display
 
-### 🔹 Advanced Features:
+###  Advanced Features:
 - Attack simulation (step-by-step)
 - Attacker POV (profile view)
 - Safe version generator (data masking)
 - Chart visualization (risk display)
 
-### 🔹 UI/UX:
+###  UI/UX:
 - Dark cybersecurity dashboard theme
 - Neon/glow design elements
 - Interactive and clean layout
 
-### 🔹 Authentication:
+###  Authentication:
 - Basic login system using Flask sessions (demo purpose)
 
 ---
 
-## 🛠️ Tech Stack:
+##  Tech Stack:
 - **Backend:** Python (Flask)
 - **Frontend:** HTML, CSS, JavaScript
 - **Visualization:** Chart.js
 
 ---
 
-## 📊 Current Status:
-✅ Fully functional working prototype  
-✅ Backend + Frontend integrated  
-✅ UI enhanced for demo presentation  
-✅ GitHub repository created and updated  
+##  Current Status:
+ Fully functional working prototype  
+ Backend + Frontend integrated  
+ UI enhanced for demo presentation  
+ GitHub repository created and updated  
 
 ---
 
-## 🚧 Challenges Faced:
+##  Challenges Faced:
 - Handling detection logic accurately using regex
 - Managing frontend-backend integration
 - Designing an interactive cybersecurity UI
 
 ---
 
-## 🔮 Next Steps:
+##  Next Steps:
 - Improve detection accuracy (better NLP logic)
 - Add OCR for image-based input
 - Enhance UI animations and transitions
@@ -86,5 +86,5 @@ We built **Future Trace AI**, a cybersecurity web application that:
 
 ---
 
-## 🏁 Conclusion:
+##  Conclusion:
 Future Trace AI successfully demonstrates how user data can be analyzed and potential cyber threats can be predicted *before exposure*, helping users make safer decisions online.
