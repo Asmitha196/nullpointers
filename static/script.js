@@ -1,6 +1,9 @@
 const state = {
     riskChart: null,
     loadingInterval: null,
+    // # NEW FEATURE: track advanced input source and image preview state
+    inputSource: "text",
+    previewUrl: null,
     timeouts: {
         terminal: [],
         safe: [],
@@ -30,6 +33,10 @@ function bindDashboard() {
     refs.imageInput = document.getElementById("imageInput");
     refs.pasteBtn = document.getElementById("pasteBtn");
     refs.analyzeBtn = document.getElementById("analyzeBtn");
+    refs.preview = document.getElementById("preview");
+    refs.previewSection = document.getElementById("previewSection");
+    refs.resultSourceValue = document.getElementById("resultSourceValue");
+    refs.resultSourceBadge = document.getElementById("resultSourceBadge");
     refs.results = document.getElementById("results");
     refs.riskScore = document.getElementById("riskScore");
     refs.riskLabel = document.getElementById("riskLabel");
@@ -66,6 +73,9 @@ function bindDashboard() {
 
     if (refs.userInput) {
         refs.userInput.addEventListener("input", () => {
+            // # NEW FEATURE: typing returns the source context to plain text
+            setInputSource("text");
+            clearPreview();
             refs.userInput.classList.remove("field-error");
             setInputFeedback(
                 "Paste a bio, email, or message to model what an attacker can infer from it.",
@@ -102,7 +112,7 @@ function createParticles(count) {
 
 async function handleAnalyze(textOverride) {
     const text = String(textOverride !== undefined ? textOverride : refs.userInput?.value || "").trim();
-    const mode = (refs.inputMode?.value || "General Text").toLowerCase();
+    const sourceKind = state.inputSource;
 
     if (!text) {
         refs.userInput?.classList.add("field-error");
@@ -111,7 +121,10 @@ async function handleAnalyze(textOverride) {
         return;
     }
 
-    setInputFeedback("Threat simulation in progress...", false);
+    // # NEW FEATURE: source-aware analyze message and document preprocessing
+    const preparedText = buildPreparedText(text, sourceKind);
+    const mode = String(refs.inputMode?.value || "General Text").toLowerCase();
+    setInputFeedback(getAnalyzeMessage(sourceKind), false);
     setLoadingState(true);
 
     try {
@@ -120,7 +133,10 @@ async function handleAnalyze(textOverride) {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ text, mode }),
+            body: JSON.stringify({
+                text: preparedText,
+                mode,
+            }),
         });
 
         if (response.status === 401) {
@@ -134,14 +150,14 @@ async function handleAnalyze(textOverride) {
             throw new Error(payload.error || "Analysis failed.");
         }
 
-        finishLoading(() => displayResults(payload));
+        finishLoading(() => displayResults(payload, { sourceKind, preparedText }));
     } catch (error) {
         setLoadingState(false);
         setInputFeedback(error.message || "Analysis failed.", true);
     }
 }
 
-// NEW FEATURE: text file upload handler
+// # NEW FEATURE: advanced document upload support
 async function handleFileUpload(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) {
@@ -151,38 +167,59 @@ async function handleFileUpload(event) {
     const reader = new FileReader();
 
     reader.onload = async () => {
-        const fileText = String(reader.result || "").trim();
-        if (!fileText) {
-            setInputFeedback("Uploaded text file is empty.", true);
+        const extractedText = String(reader.result || "").trim();
+        refs.userInput.value = extractedText;
+        refs.userInput.classList.remove("field-error");
+        setInputSource("document");
+        clearPreview();
+
+        if (!extractedText) {
+            setInputFeedback("\uD83D\uDCC4 Uploaded document is empty or could not be read.", true);
             return;
         }
 
-        refs.userInput.value = fileText;
-        setInputFeedback(`Text file loaded: ${file.name}. Analyzing...`, false);
-        await handleAnalyze(fileText);
+        setInputFeedback("\uD83D\uDCC4 Analyzing uploaded document...", false);
+        await handleAnalyze(extractedText);
     };
 
     reader.onerror = () => {
-        setInputFeedback("Unable to read the file. Please upload a valid text file.", true);
+        setInputFeedback("\uD83D\uDCC4 Unable to read the uploaded document.", true);
     };
 
     reader.readAsText(file);
+    event.target.value = "";
 }
 
-// NEW FEATURE: mock image upload handler
+// # NEW FEATURE: simulated OCR flow with preview
 async function handleImageUpload(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) {
         return;
     }
 
-    refs.userInput.value = file.name ? `Image: ${file.name}` : "Image uploaded";
-    setInputFeedback("Image uploaded - analyzing...", false);
-    await handleAnalyze(`Extracted from image:\nName: Image User\nDate of Birth: 15/03/1995\nPhone: 9876543210\nLocation: Mumbai`);
+    const simulatedText = [
+        "Name: Rahul Sharma",
+        "Phone: 9876543210",
+        "Email: rahul@gmail.com",
+        "DOB: 12/05/2002",
+    ].join("\n");
+
+    refs.userInput.value = simulatedText;
+    refs.userInput.classList.remove("field-error");
+    setInputSource("image");
+    renderImagePreview(file);
+    setInputFeedback("\uD83D\uDDBC Extracting text from image...", false);
+    await handleAnalyze(simulatedText);
+    event.target.value = "";
 }
 
-// NEW FEATURE: clipboard paste handler
+// # NEW FEATURE: clipboard source tracking
 async function handlePasteClipboard() {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+        setInputFeedback("Clipboard access is not available in this browser.", true);
+        return;
+    }
+
     try {
         const clipboardText = String(await navigator.clipboard.readText() || "").trim();
         if (!clipboardText) {
@@ -191,6 +228,9 @@ async function handlePasteClipboard() {
         }
 
         refs.userInput.value = clipboardText;
+        refs.userInput.classList.remove("field-error");
+        setInputSource("clipboard");
+        clearPreview();
         setInputFeedback("Clipboard text pasted. Analyzing...", false);
         await handleAnalyze(clipboardText);
     } catch (error) {
@@ -245,16 +285,19 @@ function setInputFeedback(message, isError) {
     refs.inputFeedback.classList.toggle("is-error", Boolean(isError));
 }
 
-function displayResults(payload) {
+function displayResults(payload, context = {}) {
     const analysis = payload.analysis || {};
     const extracted = normalizeExtractedData(analysis.extracted_data);
     const attack = payload.attack || [];
     const score = normalizeRiskScore(analysis.risk_score, extracted);
+    // # NEW FEATURE: merge source-specific alerts and update source label
+    const alerts = buildEnhancedAlerts(analysis.alerts || [], context);
 
     refs.results?.classList.remove("is-hidden");
 
+    safelyRender(() => updateSourceLabel(context.sourceKind || state.inputSource));
     safelyRender(() => updateRiskScore(score));
-    safelyRender(() => updateAlerts(analysis.alerts || []));
+    safelyRender(() => updateAlerts(alerts));
     safelyRender(() => updateAttackTimeline(attack));
     safelyRender(() => updateAttackSteps(attack));
     safelyRender(() => updateAttackerPanel(extracted));
@@ -660,6 +703,101 @@ async function copySafeVersion() {
 
 function formatLineValue(list) {
     return list && list.length ? list.join(", ") : "NOT FOUND";
+}
+
+// # NEW FEATURE: source-aware input metadata
+function setInputSource(sourceKind) {
+    state.inputSource = sourceKind;
+}
+
+function getSourceMeta(sourceKind) {
+    const sourceMap = {
+        text: { label: "Text Input", tag: "TEXT INPUT" },
+        document: { label: "Document Upload", tag: "DOCUMENT UPLOAD" },
+        image: { label: "Image Input", tag: "IMAGE INPUT" },
+        clipboard: { label: "Clipboard", tag: "CLIPBOARD" },
+    };
+
+    return sourceMap[sourceKind] || sourceMap.text;
+}
+
+function getAnalyzeMessage(sourceKind) {
+    if (sourceKind === "document") {
+        return "\uD83D\uDCC4 Analyzing uploaded document...";
+    }
+    if (sourceKind === "image") {
+        return "\uD83D\uDDBC Extracting text from image...";
+    }
+    return "Threat simulation in progress...";
+}
+
+function buildPreparedText(text, sourceKind) {
+    if (sourceKind === "document" && !text.startsWith("[DOCUMENT INPUT]")) {
+        return `[DOCUMENT INPUT]\n${text}`;
+    }
+    return text;
+}
+
+function buildEnhancedAlerts(alerts, context) {
+    const mergedAlerts = [...alerts];
+
+    if ((context.preparedText || "").startsWith("[DOCUMENT INPUT]")) {
+        mergedAlerts.unshift("Document contains sensitive information");
+    }
+
+    if (context.sourceKind === "image") {
+        mergedAlerts.unshift("Sensitive data extracted from image");
+    }
+
+    return [...new Set(mergedAlerts)];
+}
+
+function updateSourceLabel(sourceKind) {
+    const meta = getSourceMeta(sourceKind);
+
+    if (refs.resultSourceValue) {
+        refs.resultSourceValue.textContent = meta.label;
+    }
+
+    if (refs.resultSourceBadge) {
+        refs.resultSourceBadge.textContent = `SOURCE // ${meta.tag}`;
+    }
+}
+
+function renderImagePreview(file) {
+    if (!refs.preview || !refs.previewSection) {
+        return;
+    }
+
+    clearPreview();
+    state.previewUrl = URL.createObjectURL(file);
+
+    const img = document.createElement("img");
+    img.src = state.previewUrl;
+    img.alt = "Uploaded preview";
+    img.style.width = "150px";
+    img.style.height = "auto";
+    img.style.borderRadius = "14px";
+    img.style.border = "1px solid rgba(99, 243, 255, 0.3)";
+    img.style.boxShadow = "0 0 20px rgba(99, 243, 255, 0.18)";
+
+    refs.preview.appendChild(img);
+    refs.previewSection.style.display = "block";
+}
+
+function clearPreview() {
+    if (state.previewUrl) {
+        URL.revokeObjectURL(state.previewUrl);
+        state.previewUrl = null;
+    }
+
+    if (refs.preview) {
+        refs.preview.innerHTML = "";
+    }
+
+    if (refs.previewSection) {
+        refs.previewSection.style.display = "none";
+    }
 }
 
 function schedule(bucket, callback, delay) {

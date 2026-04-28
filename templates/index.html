@@ -52,27 +52,33 @@
                     Paste a bio, email, or message to model what an attacker can infer from it.
                 </p>
 
-                <!-- NEW FEATURE: multi-input controls -->
-                <div style="display:grid; gap:1rem; margin-bottom:1rem;">
-                    <div style="display:grid; gap:0.65rem;">
-                        <label class="field-label" for="inputMode">Input Mode</label>
-                        <select id="inputMode" class="field-input" aria-label="Select input mode">
+                <!-- # NEW FEATURE: Advanced multi-input controls -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 18px;">
+                    <label class="field-group" for="inputMode">
+                        <span class="field-label">Input Mode</span>
+                        <select id="inputMode" class="field-input" aria-label="Input mode selector">
                             <option>General Text</option>
                             <option>Email</option>
                             <option>SMS</option>
                             <option>Resume</option>
                         </select>
-                    </div>
-                    <div style="display:grid; gap:0.65rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                        <div class="field-group">
-                            <label class="field-label" for="fileInput">Upload Text File</label>
-                            <input type="file" id="fileInput" class="field-input" accept=".txt" aria-label="Upload a text file" />
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="imageInput">Upload Image</label>
-                            <input type="file" accept="image/*" id="imageInput" class="field-input" aria-label="Upload an image" />
-                        </div>
-                        <button id="pasteBtn" class="copy-btn" type="button">Paste from Clipboard</button>
+                    </label>
+
+                    <label class="field-group" for="fileInput">
+                        <span class="field-label">Document Upload</span>
+                        <input type="file" id="fileInput" class="field-input" accept=".txt,.md,.csv,.log,.json,.text" aria-label="Upload text file">
+                    </label>
+
+                    <label class="field-group" for="imageInput">
+                        <span class="field-label">Image Input</span>
+                        <input type="file" accept="image/*" id="imageInput" class="field-input" aria-label="Upload image">
+                    </label>
+
+                    <div class="field-group" style="align-self: end;">
+                        <span class="field-label">Clipboard</span>
+                        <button id="pasteBtn" type="button" class="copy-btn" style="width: 100%; margin-top: 0; min-height: 54px;">
+                            Paste from Clipboard
+                        </button>
                     </div>
                 </div>
 
@@ -81,6 +87,12 @@
                     placeholder="Example: Hi, I'm Aisha Raman from Bengaluru. Reach me at 9876543210. My DOB is 14/09/1998 and I am moving to Chennai next month."
                     aria-label="User text for risk analysis"
                 ></textarea>
+
+                <!-- # NEW FEATURE: Image preview surface -->
+                <div id="previewSection" style="display: none; margin-top: 14px;">
+                    <span class="signal-tag" style="margin-bottom: 12px;">IMAGE PREVIEW</span>
+                    <div id="preview" style="display: flex; flex-wrap: wrap; gap: 12px;"></div>
+                </div>
 
                 <div class="input-actions">
                     <button id="analyzeBtn" class="analyze-btn" type="button">
@@ -97,6 +109,15 @@
             </section>
 
             <section id="results" class="results-shell is-hidden" aria-live="polite">
+                <!-- # NEW FEATURE: Results source labeling -->
+                <div class="card-head" style="margin-bottom: 0;">
+                    <div>
+                        <p class="panel-kicker">Input trace</p>
+                        <h2 class="card-title">Source: <span id="resultSourceValue">Text Input</span></h2>
+                    </div>
+                    <span id="resultSourceBadge" class="signal-tag">SOURCE // TEXT INPUT</span>
+                </div>
+
                 <div class="top-grid">
                     <article class="panel risk-panel">
                         <div class="card-head">
