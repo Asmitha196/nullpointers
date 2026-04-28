@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future Trace AI Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-page="login">
+    <div class="ambient-layer">
+        <div class="bg-grid"></div>
+        <div class="bg-glow bg-glow-cyan"></div>
+        <div class="bg-glow bg-glow-red"></div>
+        <div class="bg-particles" id="particles"></div>
+        <div class="scanlines"></div>
+    </div>
+
+    <main class="login-layout">
+        <section class="panel login-card">
+            <div class="login-copy">
+                <p class="panel-kicker">Restricted access</p>
+                <h1 class="brand-title login-title">
+                    <span class="brand-cyan">FUTURE</span>
+                    <span class="brand-red">TRACE</span>
+                    <span class="brand-green">AI</span>
+                </h1>
+                <p class="login-text">
+                    Enter the control room and run predictive data misuse simulations before anything goes public.
+                </p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == "error" %}
+                            <div class="flash-error">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" class="login-form">
+                <label class="field-group" for="username">
+                    <span class="field-label">Username</span>
+                    <input class="field-input" type="text" id="username" name="username" autocomplete="username" required>
+                </label>
+
+                <label class="field-group" for="password">
+                    <span class="field-label">Password</span>
+                    <input class="field-input" type="password" id="password" name="password" autocomplete="current-password" required>
+                </label>
+
+                <button type="submit" class="login-btn">
+                    <span class="button-label">Unlock Dashboard</span>
+                </button>
+            </form>
+
+            <div class="credential-note">
+                <span>Demo credentials</span>
+                <strong>admin / 1234</strong>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

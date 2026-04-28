@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future Trace AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body data-page="dashboard">
+    <div class="ambient-layer">
+        <div class="bg-grid"></div>
+        <div class="bg-glow bg-glow-cyan"></div>
+        <div class="bg-glow bg-glow-red"></div>
+        <div class="bg-particles" id="particles"></div>
+        <div class="scanlines"></div>
+    </div>
+
+    <div class="app-shell">
+        <header class="panel hero">
+            <div class="hero-copy">
+                <p class="panel-kicker">Predictive cyber defense</p>
+                <h1 class="brand-title">
+                    <span class="brand-cyan">FUTURE</span>
+                    <span class="brand-red">TRACE</span>
+                    <span class="brand-green">AI</span>
+                </h1>
+                <p class="hero-text">
+                    Predict how exposed personal data can be weaponized before it ever gets shared.
+                </p>
+            </div>
+            <div class="hero-actions">
+                <span class="status-chip">SESSION // {{ username|upper }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+            </div>
+        </header>
+
+        <main>
+            <section class="panel input-panel">
+                <div class="card-head">
+                    <div>
+                        <p class="panel-kicker">Leak simulator</p>
+                        <h2 class="card-title">User Input Panel</h2>
+                    </div>
+                    <span class="signal-tag">LIVE TRACE</span>
+                </div>
+
+                <p class="panel-note" id="inputFeedback">
+                    Paste a bio, email, or message to model what an attacker can infer from it.
+                </p>
+
+                <textarea
+                    id="userInput"
+                    placeholder="Example: Hi, I'm Aisha Raman from Bengaluru. Reach me at 9876543210. My DOB is 14/09/1998 and I am moving to Chennai next month."
+                    aria-label="User text for risk analysis"
+                ></textarea>
+
+                <div class="input-actions">
+                    <button id="analyzeBtn" class="analyze-btn" type="button">
+                        <span class="button-label">Analyze Risk</span>
+                        <span class="button-loader">
+                            <span class="spinner"></span>
+                            <span>Scanning...</span>
+                        </span>
+                    </button>
+                    <div id="loadingTrack" class="loading-track" aria-hidden="true">
+                        <div id="loadingBar" class="loading-bar"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="results" class="results-shell is-hidden" aria-live="polite">
+                <div class="top-grid">
+                    <article class="panel risk-panel">
+                        <div class="card-head">
+                            <div>
+                                <p class="panel-kicker">Exposure score</p>
+                                <h2 class="card-title">Risk Dashboard</h2>
+                            </div>
+                            <span class="signal-tag">CORE SIGNAL</span>
+                        </div>
+
+                        <div class="score-stack">
+                            <div class="score-line">
+                                <div id="riskScore" class="risk-value risk-low">0</div>
+                                <div class="score-denominator">/100</div>
+                            </div>
+                            <p id="riskLabel" class="risk-label">Standby</p>
+                            <p id="riskMeta" class="risk-meta">Run a scan to estimate exposure severity.</p>
+                            <div id="highRiskIndicator" class="risk-flag hidden">HIGH RISK DETECTED</div>
+                        </div>
+
+                        <div class="chart-wrap">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="panel alerts-panel">
+                        <div class="card-head">
+                            <div>
+                                <p class="panel-kicker">Signal feed</p>
+                                <h2 class="card-title">Alerts</h2>
+                            </div>
+                            <span class="signal-tag alert-tag">WATCHLIST</span>
+                        </div>
+                        <ul id="alertsList" class="alerts-list"></ul>
+                    </article>
+                </div>
+
+                <article class="panel timeline-panel">
+                    <div class="card-head">
+                        <div>
+                            <p class="panel-kicker">Threat path</p>
+                            <h2 class="card-title">Attack Timeline</h2>
+                        </div>
+                        <span class="signal-tag">STEP REVEAL</span>
+                    </div>
+                    <div id="attackTimeline" class="timeline"></div>
+                </article>
+
+                <div class="middle-grid">
+                    <article class="panel terminal-panel">
+                        <div class="card-head">
+                            <div>
+                                <p class="panel-kicker">Adversary perspective</p>
+                                <h2 class="card-title">Attacker POV</h2>
+                            </div>
+                            <span class="signal-tag terminal-tag">TERMINAL</span>
+                        </div>
+                        <div class="terminal-window">
+                            <div class="terminal-topbar">
+                                <span class="terminal-dot terminal-red"></span>
+                                <span class="terminal-dot terminal-yellow"></span>
+                                <span class="terminal-dot terminal-green"></span>
+                                <span class="terminal-title">attacker-console.trace</span>
+                            </div>
+                            <div id="attackerPanel" class="terminal-body"></div>
+                        </div>
+                    </article>
+
+                    <article class="panel safe-panel">
+                        <div class="card-head">
+                            <div>
+                                <p class="panel-kicker">Damage reduction</p>
+                                <h2 class="card-title">Sanitized Output</h2>
+                            </div>
+                            <span class="signal-tag safe-tag">SAFE MODE</span>
+                        </div>
+                        <pre id="safeVersion" class="safe-output">Sanitized version will appear here.</pre>
+                        <button id="copyBtn" class="copy-btn" type="button">
+                            <span class="button-label">Copy Safe Version</span>
+                        </button>
+                    </article>
+                </div>
+
+                <article class="panel simulation-panel">
+                    <div class="card-head">
+                        <div>
+                            <p class="panel-kicker">Scenario playback</p>
+                            <h2 class="card-title">Attack Simulation</h2>
+                        </div>
+                        <span class="signal-tag">THREAT MODEL</span>
+                    </div>
+                    <div id="attackSteps" class="simulation-grid"></div>
+                </article>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <span>Future Trace AI</span>
+            <span class="footer-divider"></span>
+            <span>Predict before you post.</span>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
