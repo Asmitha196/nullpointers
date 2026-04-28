@@ -1,10 +1,14 @@
 # 🚀 Future Trace AI – Progress Report
 
 ## 👥 Team Name:
-Future Trace AI
+Null Pointers
 
 ## 🧑‍💻 Team Members:
+- Rayzil
+- Ashritha
 - Ashmitha
+- Deeksha
+
 
 ---
 
