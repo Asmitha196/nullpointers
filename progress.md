@@ -1,20 +1,23 @@
-# 🚀 Future Trace AI – Progress Report (Updated)
+#  Future Trace AI – Progress Report (Updated)
 
-## 👥 Team Name:
+##  Team Name:
 Future Trace AI
 
-## 🧑‍💻 Team Members:
+##  Team Members:
+- Rayzil
+- Ashritha
 - Ashmitha
+- Deeksha 
 
 ---
 
-## 🎯 Problem Statement:
+##  Problem Statement:
 Users frequently share personal data (phone numbers, emails, DOB, location) across platforms without understanding how attackers can exploit it.  
 There is no simple tool that predicts the consequences of sharing such data *before exposure*.
 
 ---
 
-## 💡 Solution Overview:
+##  Solution Overview:
 Future Trace AI is an AI-powered cybersecurity system that:
 - Detects sensitive information in user data
 - Calculates a **risk score (0–100)**
@@ -25,9 +28,9 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-## ⚙️ Features Implemented:
+##  Features Implemented:
 
-### 🔹 Core Features:
+###  Core Features:
 - Text input analysis (bio, email, SMS)
 - Detection of:
   - Name
@@ -40,7 +43,7 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-### 🔹 Advanced Detection:
+###  Advanced Detection:
 - Sensitive keyword detection:
   - OTP, password, bank, account, credit card
 - SMS/phishing pattern detection
@@ -51,9 +54,9 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ### 🔹 Multi-Input System (Major Upgrade):
 - Text input
-- 📄 File upload (document analysis)
-- 🖼 Image upload (simulated OCR-based detection)
-- 📋 Clipboard paste functionality
+-  File upload (document analysis)
+- Image upload (simulated OCR-based detection)
+-  Clipboard paste functionality
 - Input mode selector:
   - General Text
   - Email
@@ -62,7 +65,7 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-### 🔹 Attack Simulation Engine:
+###  Attack Simulation Engine:
 - Step-by-step attack modeling:
   - Data Collection
   - Profile Building
@@ -72,14 +75,14 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-### 🔹 Attacker POV:
+###  Attacker POV:
 - Displays extracted user profile
 - Shows how attacker views the data
 - Lists possible exploit strategies
 
 ---
 
-### 🔹 Risk Dashboard:
+###  Risk Dashboard:
 - Animated risk score display
 - Alerts panel
 - Chart.js visualization
@@ -87,7 +90,7 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-### 🔹 Safe Version Generator:
+###  Safe Version Generator:
 - Masks sensitive data:
   - Phone → [PHONE]
   - Email → [EMAIL]
@@ -97,7 +100,7 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-### 🔹 UI/UX Enhancements:
+###  UI/UX Enhancements:
 - Dark cyberpunk dashboard theme
 - Neon/glow design
 - Interactive layout
@@ -106,13 +109,13 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-### 🔹 Authentication:
+###  Authentication:
 - Basic login system using Flask sessions
 - Route protection for dashboard
 
 ---
 
-## 🛠️ Tech Stack:
+##  Tech Stack:
 - **Backend:** Python (Flask)
 - **Frontend:** HTML, CSS, JavaScript
 - **Visualization:** Chart.js
@@ -120,17 +123,17 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-## 📊 Current Status:
-✅ Fully functional working prototype  
-✅ Multi-input support implemented  
-✅ UI enhanced for demo  
-✅ Attack simulation working  
-✅ GitHub repository updated  
-✅ Progress documented  
+##  Current Status:
+ Fully functional working prototype  
+ Multi-input support implemented  
+ UI enhanced for demo  
+ Attack simulation working  
+ GitHub repository updated  
+ Progress documented  
 
 ---
 
-## 🚧 Challenges Faced:
+##  Challenges Faced:
 - Ensuring multi-input integration without breaking existing features
 - Maintaining clean UI with added functionalities
 - Balancing simplicity with impactful features
@@ -138,7 +141,7 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-## 🔮 Future Scope:
+##  Future Scope:
 - Real OCR integration for images
 - Advanced NLP for better context detection
 - Browser extension integration
@@ -147,5 +150,5 @@ Future Trace AI is an AI-powered cybersecurity system that:
 
 ---
 
-## 🏁 Conclusion:
+##  Conclusion:
 Future Trace AI transforms cybersecurity from reactive detection to **proactive prevention** by predicting how user data can be exploited before it is shared, empowering users to make safer decisions online.
